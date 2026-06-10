@@ -1,0 +1,8 @@
+{
+  "name": "My通知アプリ",
+  "short_name": "My通知",
+  "start_url": "index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#000000"
+}
