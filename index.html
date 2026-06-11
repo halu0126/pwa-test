@@ -4,9 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PWA通知テスト</title>
+    <link rel="manifest" href="manifest.json">
 </head>
 <body>
     <h1>PWA通知システム（開発中）</h1>
     <p>まずはこの画面がiPhoneに移れば大成功です！</p>
-</body>
+
+    <script>
+        // ブラウザがサービスワーカー（警備員）に対応しているか確認
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+            .then(function(registration) {
+                console.log('サービスワーカーの登録に成功しました！', registration);
+            })
+            .catch(function(error) {
+                console.log('サービスワーカーの登録に失敗しました...', error);
+            });
+        }
+    </script>
+    </body>
 </html>
