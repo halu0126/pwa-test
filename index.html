@@ -4,9 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PWA通知テスト</title>
-    <link align="manifest" href="manifest.json">
+    <link rel="manifest" href="manifest.json">
     <style>
-        /* ボタンを少し押しやすくするための簡単なデザイン */
         .btn-push {
             padding: 15px 25px;
             font-size: 18px;
@@ -15,34 +14,54 @@
             border: none;
             border-radius: 8px;
             cursor: pointer;
+            margin-bottom: 15px;
+        }
+        .btn-test {
+            background-color: #28a745; /* 緑色のボタン */
         }
     </style>
 </head>
 <body>
     <h1>PWA通知システム（開発中）</h1>
-    <p>下のボタンを押して、通知を許可してください。</p>
+    <p>①下のボタンで許可を出したあと、②テストボタンを押してください。</p>
 
-    <button id="enable-push" class="btn-push">通知を有効にする</button>
+    <button id="enable-push" class="btn-push">① 通知を有効にする</button><br>
+    <button id="test-push" class="btn-push btn-test">② スマホを鳴らす（テスト）</button>
 
     <script>
         // 1. サービスワーカー（警備員）の登録
+        let swRegistration = null;
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
             .then(function(registration) {
                 console.log('サービスワーカー登録完了');
+                swRegistration = registration; // 登録情報を記憶しておく
             });
         }
 
-        // 2. ボタンを押した時の動き
+        // 2. ボタンを押した時の動き（許可）
         document.getElementById('enable-push').addEventListener('click', function() {
-            // iPhone（ブラウザ）に通知の許可を求める
             Notification.requestPermission().then(function(permission) {
                 if (permission === 'granted') {
-                    alert('通知が許可されました！これでテストの準備はバッチリです。');
-                } else if (permission === 'denied') {
-                    alert('通知が拒否されました。設定アプリから許可し直せます。');
+                    alert('通知が許可されました！');
                 }
             });
+        });
+
+        // 3. 👇 新しく追加した「テスト通知を発生させる」動き
+        document.getElementById('test-push').addEventListener('click', function() {
+            if (Notification.permission === 'granted' && swRegistration) {
+                // 3秒後に通知をピコンと鳴らす仕掛け
+                setTimeout(function() {
+                    swRegistration.showNotification('やりましたね！', {
+                        body: '自作のシステムから通知を届けることに成功しました！',
+                        icon: 'icon.png'
+                    });
+                }, 3000); 
+                alert('3秒後に通知が来ます！すぐにスマホをスリープ（画面真っ暗）にするか、ホーム画面に戻って待ってください！');
+            } else {
+                alert('先に①のボタンで通知を許可してください。');
+            }
         });
     </script>
 </body>
