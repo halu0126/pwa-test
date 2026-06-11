@@ -6,62 +6,62 @@
     <title>PWA通知テスト</title>
     <link rel="manifest" href="manifest.json">
     <style>
-        .btn-push {
-            padding: 15px 25px;
-            font-size: 18px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-bottom: 15px;
-        }
-        .btn-test {
-            background-color: #28a745; /* 緑色のボタン */
-        }
+        .btn-push { padding: 15px 25px; font-size: 18px; background-color: #007bff; color: white; border: none; border-radius: 8px; cursor: pointer; margin-bottom: 15px; }
+        .textarea-token { width: 100%; height: 100px; margin-top: 10px; font-size: 12px; }
     </style>
 </head>
 <body>
     <h1>PWA通知システム（開発中）</h1>
-    <p>①下のボタンで許可を出したあと、②テストボタンを押してください。</p>
+    <p>①ボタンを押して通知を許可し、宛先URLを発行してください。</p>
 
-    <button id="enable-push" class="btn-push">① 通知を有効にする</button><br>
-    <button id="test-push" class="btn-push btn-test">② スマホを鳴らす（テスト）</button>
+    <button id="enable-push" class="btn-push">① 通知を有効にして宛先を取得</button>
+
+    <p>👇 発行されたあなたのスマホの「宛先URL」です：</p>
+    <textarea id="token-output" class="textarea-token" placeholder="ここに宛先URLが表示されます" readonly></textarea>
 
     <script>
-        // 1. サービスワーカー（警備員）の登録
+        // ⚠️ 先ほどサイトで作った「Public Key（公開鍵）」をここに貼り付けてください！
+        const VAPID_PUBLIC_KEY = "BIZ3g6pXB7OGuNeqBHL6D2ixGg7pvoowkQLwC5S6OLjVS_P7mGgAtqKcyx6rqEaWXpYH_i_Eb-XncC14WQylbtU";
+
         let swRegistration = null;
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('sw.js')
-            .then(function(registration) {
-                console.log('サービスワーカー登録完了');
-                swRegistration = registration; // 登録情報を記憶しておく
+            navigator.serviceWorker.register('sw.js').then(function(reg) {
+                swRegistration = reg;
             });
         }
 
-        // 2. ボタンを押した時の動き（許可）
+        // 文字列を型変換する補助関数（そのまま貼っておいてください）
+        function urlBase64ToUint8Array(base64String) {
+            const padding = '='.repeat((4 - base64String.length % 4) % 4);
+            const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+            const rawData = window.atob(base64);
+            const outputArray = new Uint8Array(rawData.length);
+            for (let i = 0; i < rawData.length; ++i) { outputArray[i] = rawData.charCodeAt(i); }
+            return outputArray;
+        }
+
+        // ボタンを押した時の動き
         document.getElementById('enable-push').addEventListener('click', function() {
             Notification.requestPermission().then(function(permission) {
-                if (permission === 'granted') {
-                    alert('通知が許可されました！');
+                if (permission === 'granted' && swRegistration) {
+                    
+                    // スマホ専用の宛先URL（サブスクリプション）を発行する
+                    swRegistration.pushManager.subscribe({
+                        userVisibleOnly: true,
+                        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+                    })
+                    .then(function(subscription) {
+                        // 発行された宛先（JSON文字列）を画面のテキストエリアに表示する
+                        document.getElementById('token-output').value = JSON.stringify(subscription);
+                        alert('宛先URLの発行に成功しました！下の枠内の文字をすべてコピーしてGASで使います。');
+                    })
+                    .catch(function(err) {
+                        console.error('宛先の取得に失敗しました:', err);
+                        alert('エラーが発生しました。公開鍵が正しく貼られているか確認してください。');
+                    });
+
                 }
             });
-        });
-
-        // 3. 👇 新しく追加した「テスト通知を発生させる」動き
-        document.getElementById('test-push').addEventListener('click', function() {
-            if (Notification.permission === 'granted' && swRegistration) {
-                // 3秒後に通知をピコンと鳴らす仕掛け
-                setTimeout(function() {
-                    swRegistration.showNotification('やりましたね！', {
-                        body: '自作のシステムから通知を届けることに成功しました！',
-                        icon: 'icon.png'
-                    });
-                }, 3000); 
-                alert('3秒後に通知が来ます！すぐにスマホをスリープ（画面真っ暗）にするか、ホーム画面に戻って待ってください！');
-            } else {
-                alert('先に①のボタンで通知を許可してください。');
-            }
         });
     </script>
 </body>
