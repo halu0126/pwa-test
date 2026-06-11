@@ -4,23 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PWA通知テスト</title>
-    <link rel="manifest" href="manifest.json">
+    <link align="manifest" href="manifest.json">
+    <style>
+        /* ボタンを少し押しやすくするための簡単なデザイン */
+        .btn-push {
+            padding: 15px 25px;
+            font-size: 18px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+        }
+    </style>
 </head>
 <body>
     <h1>PWA通知システム（開発中）</h1>
-    <p>まずはこの画面がiPhoneに移れば大成功です！</p>
+    <p>下のボタンを押して、通知を許可してください。</p>
+
+    <button id="enable-push" class="btn-push">通知を有効にする</button>
 
     <script>
-        // ブラウザがサービスワーカー（警備員）に対応しているか確認
+        // 1. サービスワーカー（警備員）の登録
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('sw.js')
             .then(function(registration) {
-                console.log('サービスワーカーの登録に成功しました！', registration);
-            })
-            .catch(function(error) {
-                console.log('サービスワーカーの登録に失敗しました...', error);
+                console.log('サービスワーカー登録完了');
             });
         }
+
+        // 2. ボタンを押した時の動き
+        document.getElementById('enable-push').addEventListener('click', function() {
+            // iPhone（ブラウザ）に通知の許可を求める
+            Notification.requestPermission().then(function(permission) {
+                if (permission === 'granted') {
+                    alert('通知が許可されました！これでテストの準備はバッチリです。');
+                } else if (permission === 'denied') {
+                    alert('通知が拒否されました。設定アプリから許可し直せます。');
+                }
+            });
+        });
     </script>
-    </body>
+</body>
 </html>
